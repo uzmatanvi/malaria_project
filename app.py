@@ -44,7 +44,7 @@ if uploaded_file is not None:
             # --- 4. Preprocessing ---
             # Convert to RGB and resize
             img = image.convert("RGB")
-            img = img.resize((224, 224))
+            img = img.resize((64, 64))
             
             # Convert to array and normalize
             img_array = np.array(img) / 255.0
