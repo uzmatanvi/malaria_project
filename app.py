@@ -4,64 +4,71 @@ from PIL import Image
 import numpy as np
 import os
 
-# --- 1. Page Config & Header ---
-st.set_page_config(page_title="Malaria Cell Detector", layout="centered")
-st.title("🔬 Malaria Cell Detection")
-st.write("Upload a blood smear image to detect if the cell is Parasitized or Uninfected.")
+# --- 1. Page Configuration ---
+st.set_page_config(page_title="Malaria Detector", page_icon="🔬")
 
-# --- 2. Load the Model ---
-# Using @st.cache_resource so the model only loads once, making the app fast
+st.title("🔬 Malaria Cell Classification")
+st.write("Upload a cell image to check for malaria parasites.")
+
+# --- 2. Model Loading ---
 @st.cache_resource
 def load_my_model():
-    model_path = 'best_malaria_model.h5' # <--- MAKE SURE THIS MATCHES YOUR FILENAME
-    if os.path.exists(model_path):
-        return tf.keras.models.load_model(model_path)
-    else:
-        st.error(f"Model file '{model_path}' not found in the repository!")
+    # EXACT name from your GitHub
+    model_path = 'best_malaria_model.h5'
+    
+    if not os.path.exists(model_path):
+        st.error(f"❌ Model file '{model_path}' not found in the repository!")
+        # Debug: list files to see what Streamlit sees
+        st.write("Files found:", os.listdir("."))
         return None
-import os
-st.write("Files in directory:", os.listdir("."))
+    
+    try:
+        # compile=False is safer for loading models on different systems
+        return tf.keras.models.load_model(model_path, compile=False)
+    except Exception as e:
+        st.error(f"❌ Error loading the .h5 file: {e}")
+        return None
+
 model = load_my_model()
 
-# --- 3. Image Upload ---
-uploaded_file = st.file_uploader("Choose a cell image...", type=["jpg", "png", "jpeg"])
+# --- 3. File Uploader ---
+uploaded_file = st.file_uploader("Upload a blood smear image (JPG/PNG)", type=["png", "jpg", "jpeg"])
 
-if uploaded_file is not None and model is not None:
-    # Display the uploaded image
+if uploaded_file is not None:
+    # Display the image
     image = Image.open(uploaded_file)
-    st.image(image, caption='Uploaded Image', use_container_width=True)
+    st.image(image, caption="Uploaded Image", use_container_width=True)
     
-    st.write("🔄 Classifying...")
-
-    # --- 4. Preprocessing (The Fix) ---
-    # 1. Convert to RGB (handles PNG transparency)
-    img = image.convert('RGB')
-    # 2. Resize to the 224x224 your model expects
-    img = img.resize((224, 224))
-    # 3. Convert to numpy array
-    img_array = np.array(img)
-    # 4. Normalize pixel values (0-255 -> 0-1)
-    img_array = img_array / 255.0
-    # 5. Add batch dimension: (224, 224, 3) -> (1, 224, 224, 3)
-    img_array = np.expand_dims(img_array, axis=0)
-
-    # --- 5. Prediction ---
-    try:
-        prediction = model.predict(img_array)
-        
-        # Logic for Binary Classification (1 output neuron)
-        # Usually: 0 = Parasitized, 1 = Uninfected (Check your training labels!)
-        if prediction[0][0] > 0.5:
-            result = "Uninfected"
-            confidence = prediction[0][0] * 100
-            st.success(f"Prediction: {result} ({confidence:.2f}%)")
-        else:
-            result = "Parasitized"
-            confidence = (1 - prediction[0][0]) * 100
-            st.error(f"Prediction: {result} ({confidence:.2f}%)")
+    if model is not None:
+        with st.spinner("Analyzing..."):
+            # --- 4. Preprocessing ---
+            # Convert to RGB and resize
+            img = image.convert("RGB")
+            img = img.resize((224, 224))
             
-    except Exception as e:
-        st.error(f"Error during prediction: {e}")
+            # Convert to array and normalize
+            img_array = np.array(img) / 255.0
+            
+            # Add batch dimension: (224, 224, 3) -> (1, 224, 224, 3)
+            img_array = np.expand_dims(img_array, axis=0)
+
+            # --- 5. Prediction ---
+            prediction = model.predict(img_array)
+            
+            # Assuming: 0 = Parasitized, 1 = Uninfected
+            # (If your results seem backwards, swap the labels below)
+            if prediction[0][0] > 0.5:
+                label = "Uninfected"
+                confidence = prediction[0][0] * 100
+                st.success(f"Result: **{label}**")
+            else:
+                label = "Parasitized"
+                confidence = (1 - prediction[0][0]) * 100
+                st.error(f"Result: **{label}**")
+            
+            st.info(f"Confidence Level: {confidence:.2f}%")
+    else:
+        st.warning("Model is not loaded. Please check the logs.")
 
 else:
-    st.info("Please upload an image to start.")
+    st.info("Waiting for image upload...")
