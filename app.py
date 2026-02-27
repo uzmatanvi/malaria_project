@@ -19,7 +19,8 @@ def load_my_model():
     else:
         st.error(f"Model file '{model_path}' not found in the repository!")
         return None
-
+import os
+st.write("Files in directory:", os.listdir("."))
 model = load_my_model()
 
 # --- 3. Image Upload ---
