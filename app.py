@@ -40,7 +40,7 @@ uploaded_file = st.file_uploader("Upload a blood smear image (JPG/PNG)", type=["
 if uploaded_file is not None:
     # Display the image
     image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_container_width=True)
+    st.image(image, caption="Uploaded Image")
     
     if model is not None:
         with st.spinner("Analyzing..."):
