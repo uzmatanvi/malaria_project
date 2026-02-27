@@ -13,22 +13,20 @@ st.write("Upload a cell image to check for malaria parasites.")
 # --- 2. Model Loading ---
 @st.cache_resource
 def load_my_model():
-    # EXACT name from your GitHub
     model_path = 'best_malaria_model.h5'
-    
     if not os.path.exists(model_path):
-        st.error(f"❌ Model file '{model_path}' not found in the repository!")
-        # Debug: list files to see what Streamlit sees
-        st.write("Files found:", os.listdir("."))
+        st.error(f"File {model_path} not found.")
         return None
-    
     try:
-        # compile=False is safer for loading models on different systems
-        return tf.keras.models.load_model(model_path, compile=False)
+        # We remove compile=False temporarily to see if Keras 3 handles it better
+        return tf.keras.models.load_model(model_path)
     except Exception as e:
-        st.error(f"❌ Error loading the .h5 file: {e}")
-        return None
-
+        # If it still fails, we try the "Legacy" loader
+        try:
+            return tf.keras.layers.TFSMLayer(model_path, call_endpoint='serving_default')
+        except:
+            st.error(f"❌ Version Mismatch: {e}")
+            return None
 model = load_my_model()
 
 # --- 3. File Uploader ---
