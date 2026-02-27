@@ -13,7 +13,7 @@ st.write("Upload a blood smear image to detect if the cell is Parasitized or Uni
 # Using @st.cache_resource so the model only loads once, making the app fast
 @st.cache_resource
 def load_my_model():
-    model_path = 'your_model_filename.h5' # <--- MAKE SURE THIS MATCHES YOUR FILENAME
+    model_path = 'best_malaria_model.h5' # <--- MAKE SURE THIS MATCHES YOUR FILENAME
     if os.path.exists(model_path):
         return tf.keras.models.load_model(model_path)
     else:
