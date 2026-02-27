@@ -1,5 +1,6 @@
 streamlit>=1.36.0
-tensorflow>=2.16.1
+tensorflow=2.20.0
 numpy<2.0.0
 Pillow
 h5py
+
